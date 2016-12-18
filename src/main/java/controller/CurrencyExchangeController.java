@@ -20,17 +20,23 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttributes;
 
 import service.CurrencyExchangeService;
 import service.HistoricalDataService;
 import service.SecurityService;
 import service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+
 /**
  * Handles requests for the application.
  * 
  */
 @Controller
+@SessionAttributes("userData")
 public class CurrencyExchangeController {
 
 	private static final Logger logger = LoggerFactory
@@ -53,8 +59,9 @@ public class CurrencyExchangeController {
 	private SecurityService securityService;
 	
 	@RequestMapping(value = "/logout", method = RequestMethod.POST)
-	public String loadLogout(Model model) {
+	public String loadLogout(Model model, HttpServletRequest request) {
 
+		request.getSession().removeAttribute("userName");
 		return "login";
 	}
 
@@ -72,35 +79,13 @@ public class CurrencyExchangeController {
 	 */
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public String getUserDashboard(@ModelAttribute("userForm") User userForm,
-			Model model) {
+			Model model, HttpServletRequest request) {
 
 		securityService.autologin(userForm.getName(),
 				userForm.getPassword());
-		model.addAttribute("userName", userForm.getName());
-/*		JSONObject exchangeRate = exchangeService
-				.getExchangeRateFromAPI(supportedCurrenciesArr);
-
-		model.addAttribute("exchangeRate", exchangeRate);
-
-		// Fetch historical data
-		List<HistoricalData> historicalData = historicalDataService
-				.findByUsername(userForm.getName());
-		model.addAttribute("baseCurrency", BASE_CURRENCY);
-		List<String> historicalRates = new ArrayList<String>();
-		if (historicalData != null) {
-
-			Iterator<HistoricalData> iterator = historicalData.iterator();
-			
-			while (iterator.hasNext()) {
-				historicalRates.add(iterator.next().getExchangeRates());
-			}
-		}
-
-		model.addAttribute("historicalRates", historicalRates);
+		HttpSession session = request.getSession();
 		
-		//Make entry of current query into historical records
-		historicalDataService.saveHistoricalData(userForm.getName(), BASE_CURRENCY, exchangeRate);
-*/		
+		session.setAttribute("userName", userForm.getName());
 		return "redirect:/userDashboard";
 	}
 
@@ -120,14 +105,17 @@ public class CurrencyExchangeController {
 	 */
 	@RequestMapping(value = "/registration", method = RequestMethod.POST)
 	public String registration(@ModelAttribute("userForm") User userForm,
-			Model model) {
+			Model model, HttpServletRequest request) {
 		String password = userForm.getPassword();
 		//Register the user
 		userService.save(userForm);
 
 		//Auto login after successful register
 		securityService.autologin(userForm.getName(), password);
-		model.addAttribute("userName", userForm.getName());
+
+		HttpSession session = request.getSession();
+		
+		session.setAttribute("userName", userForm.getName());
 		return "redirect:/userDashboard";
 	}
 
@@ -138,12 +126,18 @@ public class CurrencyExchangeController {
 	 * @return
 	 */
 	@RequestMapping(value = "/userDashboard", method = RequestMethod.GET)
-	public String registrationuserDashBoard(@RequestParam("userName") String userName , Model model) {
+	public String registrationuserDashBoard(HttpServletRequest request, Model model) {
 
+		HttpSession session = request.getSession();
+		
+		String userName = (String) session.getAttribute("userName");
+		
 		User user = userService.findByUsername(userName);
+		
 		if(user==null){
 			return "login";
 		}
+		
 		// Invoking third party API to get exchange rates.
 		JSONObject exchageRate = exchangeService.getExchangeRateFromAPI(supportedCurrenciesArr);
 

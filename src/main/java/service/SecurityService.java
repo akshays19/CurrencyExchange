@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,25 +30,6 @@ public class SecurityService {
 	private static final Logger logger = LoggerFactory
 			.getLogger(SecurityService.class);
 
-	/**
-	 * Find the current logged in user name
-	 * 
-	 * @return
-	 */
-	public String findLoggedInUsername() {
-		try {
-			Object userDetails = SecurityContextHolder.getContext()
-					.getAuthentication().getDetails();
-			if (userDetails instanceof UserDetails) {
-				return ((UserDetails) userDetails).getUsername();
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			logger.debug("Exception finding logged in user: " + e.getMessage());
-		}
-
-		return null;
-	}
 
 	/**
 	 * Auto login method to generate authentication token
@@ -55,9 +37,10 @@ public class SecurityService {
 	 * @param username
 	 * @param password
 	 */
-	public void autologin(String username, String password) {
+	public UsernamePasswordAuthenticationToken autologin(String username,
+			String password) {
 		UserDetails userDetails = null;
-		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
+		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = null;
 		try {
 			userDetails = userDetailsService.loadUserByUsername(username);
 			usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
@@ -79,5 +62,6 @@ public class SecurityService {
 			logger.debug("Authentication Failed: " + e.getMessage());
 		}
 
+		return usernamePasswordAuthenticationToken;
 	}
 }
