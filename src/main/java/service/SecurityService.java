@@ -37,10 +37,10 @@ public class SecurityService {
 	 * @param username
 	 * @param password
 	 */
-	public UsernamePasswordAuthenticationToken autologin(String username,
+	public void autologin(String username,
 			String password) {
 		UserDetails userDetails = null;
-		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = null;
+		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
 		try {
 			userDetails = userDetailsService.loadUserByUsername(username);
 			usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
@@ -62,6 +62,5 @@ public class SecurityService {
 			logger.debug("Authentication Failed: " + e.getMessage());
 		}
 
-		return usernamePasswordAuthenticationToken;
 	}
 }
